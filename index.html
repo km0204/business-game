@@ -92,17 +92,10 @@
 
   <div class="card">
     <h2 style="margin:0 0 10px; font-size: 15px;">2) イベント適用</h2>
-    <div class="grid grid-2">
-      <div>
-        <label for="eventNo">イベント番号（1〜10）</label>
-        <input id="eventNo" type="number" min="1" max="10" inputmode="numeric" placeholder="例: 3" />
-        <div class="hint">司会から指定された番号を入力してください。</div>
-      </div>
-      <div>
-        <label>イベントの中身（確認用）</label>
-        <input id="eventDesc" type="text" readonly />
-        <div class="hint">番号を入れると、各社の増減率が表示されます。</div>
-      </div>
+    <div>
+      <label for="eventNo">イベント番号（1〜7）</label>
+      <input id="eventNo" type="number" min="1" max="7" inputmode="numeric" placeholder="例: 3" />
+      <div class="hint">司会から指定された番号を入力してください。</div>
     </div>
 
     <div class="row" style="margin-top: 12px;">
@@ -145,7 +138,6 @@
 <div class="footerbar">
   <div class="wrap">
     <button id="btnConfirm">投資を確定</button>
-    <button class="ghost" id="btnShowEvents">イベント一覧</button>
   </div>
 </div>
 
@@ -154,29 +146,90 @@
   // ====== 設定 ======
   const INITIAL_CASH = 1_000_000; // 初期資金（今回は100万円固定）
   const companies = [
-    { id: "A", name: "企業A", min: 50_000 },
-    { id: "B", name: "企業B", min: 50_000 },
-    { id: "C", name: "企業C", min: 30_000 },
-    { id: "D", name: "企業D", min: 30_000 },
-    { id: "E", name: "企業E", min: 10_000 },
-    { id: "F", name: "企業F", min: 10_000 },
-    { id: "G", name: "企業G", min: 10_000 },
-    { id: "H", name: "企業H", min: 10_000 },
+    {
+      id: "A",
+      name: "ワンライフ不動産",
+      industry: "不動産",
+      capital: 5_000_000,
+      min: 300_000,
+      risk: "安定型",
+      description: "学生マンション賃貸",
+    },
+    {
+      id: "B",
+      name: "立正銀行",
+      industry: "銀行",
+      capital: 5_000_000,
+      min: 300_000,
+      risk: "安定型",
+      description: "投資信託、預金貸出業務",
+    },
+    {
+      id: "C",
+      name: "チャットスタイル",
+      industry: "IT",
+      capital: 5_000_000,
+      min: 200_000,
+      risk: "成長型",
+      description: "アパレル企業と提携してお勧めのコーデやアイテムをピックアップ",
+    },
+    {
+      id: "D",
+      name: "ネクストライフ保険",
+      industry: "保険",
+      capital: 3_000_000,
+      min: 200_000,
+      risk: "安定型",
+      description: "ファミリアー新プラン、短期トラベルプラン",
+    },
+    {
+      id: "E",
+      name: "ほしぞランド",
+      industry: "スーパー",
+      capital: 2_000_000,
+      min: 100_000,
+      risk: "安定型",
+      description: "毎月セール",
+    },
+    {
+      id: "F",
+      name: "未来航路トラベル",
+      industry: "旅行会社",
+      capital: 3_000_000,
+      min: 200_000,
+      risk: "ハイリスク型",
+      description: "海外国内旅行のオーダーメイドの企画販売",
+    },
+    {
+      id: "G",
+      name: "スターコーヒー",
+      industry: "飲食店",
+      capital: 5_000_000,
+      min: 100_000,
+      risk: "成長型",
+      description: "自家焙煎コーヒー豆を使用したドリンクの提供",
+    },
+    {
+      id: "H",
+      name: "Goggles",
+      industry: "外資系",
+      capital: 5_000_000,
+      min: 300_000,
+      risk: "成長型",
+      description: "検索エンジン、マップ、メールなど様々な企業の提供",
+    },
   ];
 
-  // イベント10パターン（各企業ごとの増減率）
+  // イベント7パターン（各企業ごとの増減率）
   // 例: +0.10 は +10%、-0.20 は -20%
   const events = [
-    { no: 1, title: "好景気", rates: {A: 0.10, B: 0.08, C: 0.06, D: 0.05, E: 0.03, F: 0.03, G: 0.02, H: 0.02} },
-    { no: 2, title: "不況",   rates: {A:-0.12, B:-0.10, C:-0.08, D:-0.07, E:-0.05, F:-0.05, G:-0.04, H:-0.04} },
-    { no: 3, title: "A社ニュース", rates: {A: 0.20, B: 0.00, C: 0.00, D: 0.00, E:-0.02, F: 0.00, G: 0.00, H: 0.00} },
-    { no: 4, title: "B社炎上", rates: {A: 0.00, B:-0.25, C: 0.03, D: 0.00, E: 0.00, F: 0.00, G: 0.00, H: 0.00} },
-    { no: 5, title: "C&D業界追い風", rates:{A:0.00, B:0.00, C:0.12, D:0.10, E:0.00, F:0.00, G:-0.03, H:0.00} },
-    { no: 6, title: "規制強化（E〜Hに影響）", rates:{A:0.00, B:0.00, C:0.00, D:0.00, E:-0.10, F:-0.08, G:-0.06, H:-0.05} },
-    { no: 7, title: "為替の追い風（輸出系A,B）", rates:{A:0.15, B:0.12, C:0.00, D:0.00, E:0.00, F:-0.02, G:0.00, H:0.00} },
-    { no: 8, title: "原材料高（製造系C,D）", rates:{A:0.00, B:0.00, C:-0.14, D:-0.12, E:0.00, F:0.02, G:0.00, H:0.00} },
-    { no: 9, title: "新技術ブーム（全体小幅上げ）", rates:{A:0.04, B:0.04, C:0.04, D:0.04, E:0.04, F:0.04, G:0.04, H:0.04} },
-    { no:10, title: "市場ショック（ランダム想定の代替）", rates:{A:-0.06, B:-0.08, C:-0.05, D:-0.07, E:-0.10, F:-0.04, G:-0.09, H:-0.03} },
+    { no: 1, title: "大恐慌", rates: {A:-0.30, B:-0.20, C:-0.10, D:-0.10, E:0.10, F:-0.30, G:-0.20, H:-0.20} },
+    { no: 2, title: "感染症", rates: {A:-0.10, B:-0.10, C:0.20, D:0.10, E:0.20, F:-0.30, G:-0.30, H:-0.10} },
+    { no: 3, title: "オリンピック開催", rates: {A:0.20, B:0.10, C:0.10, D:0.10, E:0.10, F:0.30, G:0.30, H:0.20} },
+    { no: 4, title: "ITバブル", rates: {A:-0.10, B:-0.10, C:0.30, D:-0.10, E:0.00, F:-0.10, G:-0.10, H:0.20} },
+    { no: 5, title: "人口減少", rates: {A:-0.20, B:-0.20, C:0.10, D:0.20, E:-0.10, F:-0.20, G:-0.20, H:0.10} },
+    { no: 6, title: "円安", rates: {A:0.10, B:0.10, C:0.20, D:0.00, E:-0.10, F:0.30, G:0.10, H:0.30} },
+    { no: 7, title: "政策があたる", rates: {A:0.20, B:0.20, C:0.20, D:0.10, E:0.10, F:0.10, G:0.10, H:0.10} },
   ];
 
   // ====== 状態 ======
@@ -202,14 +255,10 @@
   const btnApply = document.getElementById("btnApply");
   const btnReset = document.getElementById("btnReset");
   const btnNewRound = document.getElementById("btnNewRound");
-  const btnShowEvents = document.getElementById("btnShowEvents");
-
   const inputEventNo = document.getElementById("eventNo");
-  const inputEventDesc = document.getElementById("eventDesc");
 
   // ====== ユーティリティ ======
   const yen = (n) => "¥" + Math.round(n).toLocaleString("ja-JP");
-  const pct = (r) => (r >= 0 ? "+" : "") + Math.round(r * 100) + "%";
 
   const sumInvestments = () => companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
 
@@ -223,7 +272,9 @@
     companies.forEach(c => {
       const wrap = document.createElement("div");
       wrap.innerHTML = `
-        <label>${c.name}（最低 ${yen(c.min)}）</label>
+        <label>${c.name}（${c.industry}）</label>
+        <div class="small">資本金: ${yen(c.capital)} / 最低投資金額: ${yen(c.min)} / リスク: ${c.risk}</div>
+        <div class="small">${c.description}</div>
         <input type="number" inputmode="numeric" min="0" step="1000"
                id="inv_${c.id}" placeholder="投資額（円）" />
         <div class="hint">0 でもOK（投資しない）</div>
@@ -290,17 +341,12 @@
     return events.find(e => e.no === no) || null;
   }
 
-  function describeEvent(e) {
-    const parts = companies.map(c => `${c.id}${pct(e.rates[c.id] ?? 0)}`).join(" / ");
-    return `${e.no}. ${e.title}（${parts}）`;
-  }
-
   function applyEvent(no) {
     if (!confirmed) return;
 
     const e = getEvent(no);
     if (!e) {
-      alert("イベント番号は 1〜10 を入力してください。");
+      alert("イベント番号は 1〜7 を入力してください。");
       return;
     }
 
@@ -315,7 +361,7 @@
     round += 1;
 
     const total = sumInvestments();
-    const line = `🎲 イベント適用 #${round}: ${describeEvent(e)}\n   → 総資産: ${yen(total)}`;
+    const line = `🎲 イベント適用 #${round}: イベント${e.no}を適用\n   → 総資産: ${yen(total)}`;
     setLog(line);
 
     renderTable();
@@ -345,23 +391,11 @@
     renderTable();
   }
 
-  function showEvents() {
-    const lines = events.map(e => describeEvent(e)).join("\n");
-    alert("イベント一覧（1〜10）\n\n" + lines);
-  }
-
   // ====== イベント ======
   btnConfirm.addEventListener("click", validateAndConfirm);
   btnApply.addEventListener("click", () => applyEvent(Number(inputEventNo.value)));
   btnReset.addEventListener("click", resetAll);
   btnNewRound.addEventListener("click", newRound);
-  btnShowEvents.addEventListener("click", showEvents);
-
-  inputEventNo.addEventListener("input", () => {
-    const no = Number(inputEventNo.value);
-    const e = getEvent(no);
-    inputEventDesc.value = e ? describeEvent(e) : "";
-  });
 
   // ====== 初期化 ======
   renderInputs();
