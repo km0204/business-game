@@ -91,22 +91,6 @@
   </div>
 
   <div class="card">
-    <h2 style="margin:0 0 10px; font-size: 15px;">2) イベント適用</h2>
-    <div>
-      <label for="eventNo">イベント番号（1〜7）</label>
-      <input id="eventNo" type="number" min="1" max="7" inputmode="numeric" placeholder="例: 3" />
-      <div class="hint">司会から指定された番号を入力してください。</div>
-    </div>
-
-    <div class="row" style="margin-top: 12px;">
-      <button id="btnApply" disabled>イベント適用</button>
-      <button class="ghost" id="btnNewRound">新しいラウンド（投資額を再入力）</button>
-      <button class="secondary" id="btnReset">全リセット</button>
-    </div>
-    <div class="hint">※「投資を確定」していない状態ではイベント適用できません。</div>
-  </div>
-
-  <div class="card">
     <h2 style="margin:0 0 10px; font-size: 15px;">現在の投資状況</h2>
     <div style="overflow:auto;">
       <table>
@@ -133,6 +117,23 @@
     <h2 style="margin:0 0 10px; font-size: 15px;">履歴ログ</h2>
     <div class="log" id="log"></div>
   </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 10px; font-size: 15px;">2) イベント適用</h2>
+    <div>
+      <label for="eventNo">イベント番号（1〜7）</label>
+      <input id="eventNo" type="number" min="1" max="7" inputmode="numeric" placeholder="例: 3" />
+      <div class="hint">司会から指定された番号を入力してください。</div>
+    </div>
+
+    <div class="row" style="margin-top: 12px;">
+      <button id="btnApply" disabled>イベント適用</button>
+      <button class="ghost" id="btnNewRound">新しいラウンド（投資額を再入力）</button>
+      <button class="secondary" id="btnReset">全リセット</button>
+    </div>
+    <div class="hint">※「投資を確定」していない状態ではイベント適用できません。</div>
+  </div>
+
 </main>
 
 <div class="footerbar">
