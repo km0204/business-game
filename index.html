@@ -259,6 +259,37 @@
 
   // ====== ユーティリティ ======
   const yen = (n) => "¥" + Math.round(n).toLocaleString("ja-JP");
+  const numberWithCommas = (n) => Math.round(n).toLocaleString("ja-JP");
+
+  function toHalfWidth(text) {
+    return text.replace(/[０-９．，]/g, (ch) => {
+      if (ch === "．") return ".";
+      if (ch === "，") return ",";
+      return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+    });
+  }
+
+  function parseAmount(text) {
+    const raw = toHalfWidth(String(text || "")).trim();
+    if (!raw) return { value: 0, empty: true, valid: true };
+
+    const cleaned = raw.replace(/\s+/g, "").replace(/円/g, "");
+    const matched = cleaned.match(/^([0-9]+(?:\.[0-9]+)?)(億|万|千)?$/);
+    if (!matched) return { valid: false };
+
+    const base = Number(matched[1]);
+    if (!Number.isFinite(base) || base < 0) return { valid: false };
+
+    const unit = matched[2] || "";
+    const multiplier = unit === "億" ? 100_000_000 : unit === "万" ? 10_000 : unit === "千" ? 1_000 : 1;
+    return { value: Math.round(base * multiplier), empty: false, valid: true };
+  }
+
+  function formatAmountInput(el) {
+    const parsed = parseAmount(el.value);
+    if (!parsed.valid || parsed.empty) return;
+    el.value = numberWithCommas(parsed.value);
+  }
 
   const sumInvestments = () => companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
 
@@ -275,11 +306,14 @@
         <label>${c.name}（${c.industry}）</label>
         <div class="small">資本金: ${yen(c.capital)} / 最低投資金額: ${yen(c.min)} / リスク: ${c.risk}</div>
         <div class="small">${c.description}</div>
-        <input type="number" inputmode="numeric" min="0" step="1000"
-               id="inv_${c.id}" placeholder="投資額（円）" />
-        <div class="hint">0 でもOK（投資しない）</div>
+        <input type="text" inputmode="numeric"
+               id="inv_${c.id}" placeholder="例: 100万 / 300,000 / 50千" />
+        <div class="hint">0 でもOK（投資しない）。「万・千・億」「,」「円」を使って入力できます。</div>
       `;
       elCompanyInputs.appendChild(wrap);
+
+      const input = wrap.querySelector(`#inv_${c.id}`);
+      input.addEventListener("blur", () => formatAmountInput(input));
     });
 
     elMinHint.textContent = "最低投資額は入力チェックに使います（0は未投資扱い）。";
@@ -312,9 +346,16 @@
   function validateAndConfirm() {
     const inputs = companies.map(c => {
       const el = document.getElementById(`inv_${c.id}`);
-      const val = Number(el.value || 0);
-      return { c, val };
+      const parsed = parseAmount(el.value);
+      return { c, el, parsed, val: parsed.value || 0 };
     });
+
+    const invalid = inputs.filter(x => !x.parsed.valid);
+    if (invalid.length) {
+      alert("入力形式が正しくない企業があります。\n例: 100万 / 300,000 / 50千");
+      invalid[0].el.focus();
+      return;
+    }
 
     // 最低投資額チェック（0は未投資として許可）
     const badMin = inputs.filter(x => x.val > 0 && x.val < x.c.min);
@@ -331,7 +372,11 @@
     }
 
     // 確定
-    inputs.forEach(x => state.investments[x.c.id] = Math.round(x.val));
+    inputs.forEach(x => {
+      const fixed = Math.round(x.val);
+      state.investments[x.c.id] = fixed;
+      x.el.value = numberWithCommas(fixed);
+    });
     confirmed = true;
     setLog(`✅ 投資確定: 合計 ${yen(sumInvestments())}（未投資残: ${yen(state.initial - sumInvestments())}）`);
     renderTable();
@@ -372,7 +417,7 @@
     // 入力欄を現在値で埋める（次の投資配分を考えやすい）
     companies.forEach(c => {
       const el = document.getElementById(`inv_${c.id}`);
-      if (el) el.value = state.investments[c.id] || 0;
+      if (el) el.value = numberWithCommas(state.investments[c.id] || 0);
     });
     setLog("📝 新しいラウンド: 投資額を再入力してください（投資確定すると適用されます）。");
     renderTable();
