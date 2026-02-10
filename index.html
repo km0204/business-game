@@ -62,8 +62,12 @@
         <div class="t">イベント回数</div>
         <div class="v" id="kpiRound">0</div>
       </div>
+      <div class="box">
+        <div class="t">未投資残高（入力中）</div>
+        <div class="v" id="kpiRemaining">¥1,000,000</div>
+      </div>
     </div>
-    <div class="hint">※ このゲームは「投資額の増減計算」だけを行います。現金・未投資残高の概念が必要なら後で追加できます。</div>
+    <div class="hint">※ 投資額を入力すると、未投資残高が自動更新されます。</div>
   </div>
 
   <div class="card">
@@ -241,6 +245,7 @@
   const elKpiInitial = document.getElementById("kpiInitial");
   const elKpiTotal = document.getElementById("kpiTotal");
   const elKpiRound = document.getElementById("kpiRound");
+  const elKpiRemaining = document.getElementById("kpiRemaining");
 
   const btnConfirm = document.getElementById("btnConfirm");
   const btnApply = document.getElementById("btnApply");
@@ -281,6 +286,21 @@
     el.value = numberWithCommas(parsed.value);
   }
 
+  function getInputTotal() {
+    return companies.reduce((acc, c) => {
+      const el = document.getElementById(`inv_${c.id}`);
+      if (!el) return acc;
+      const parsed = parseAmount(el.value);
+      if (!parsed.valid || parsed.empty) return acc;
+      return acc + parsed.value;
+    }, 0);
+  }
+
+  function renderRemainingPreview() {
+    const baseTotal = confirmed ? sumInvestments() : getInputTotal();
+    elKpiRemaining.textContent = yen(state.initial - baseTotal);
+  }
+
   const sumInvestments = () => companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
 
   function setLog(text, append=true) {
@@ -303,7 +323,11 @@
       elCompanyInputs.appendChild(wrap);
 
       const input = wrap.querySelector(`#inv_${c.id}`);
-      input.addEventListener("blur", () => formatAmountInput(input));
+      input.addEventListener("input", renderRemainingPreview);
+      input.addEventListener("blur", () => {
+        formatAmountInput(input);
+        renderRemainingPreview();
+      });
     });
 
     elMinHint.textContent = "最低投資額は入力チェックに使います（0は未投資扱い）。";
@@ -327,6 +351,7 @@
     elKpiInitial.textContent = yen(state.initial);
     elKpiTotal.textContent = yen(total);
     elKpiRound.textContent = String(round);
+    renderRemainingPreview();
 
     btnApply.disabled = !confirmed;
     btnConfirm.textContent = confirmed ? "投資を確定（確定済み）" : "投資を確定";
