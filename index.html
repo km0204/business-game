@@ -38,13 +38,6 @@
     th:first-child, td:first-child { text-align: left; }
     .ok { color:#065f46; font-weight: 700; }
     .ng { color:#991b1b; font-weight: 700; }
-    .footerbar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(246,247,251,.92); backdrop-filter: blur(8px);
-      border-top: 1px solid #e5e7eb;
-      padding: 10px 12px;
-    }
-    .footerbar .wrap { max-width: 820px; margin: 0 auto; display:flex; gap: 10px; }
     .log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; white-space: pre-wrap; background:#0b1020; color:#e5e7eb; border-radius: 14px; padding: 12px; }
     .small { font-size: 12px; color:#6b7280; }
   </style>
@@ -88,6 +81,9 @@
     <h2 style="margin:0 0 10px; font-size: 15px;">1) 投資額入力（8企業）</h2>
     <div class="grid grid-2" id="companyInputs"></div>
     <div class="hint" id="minHint"></div>
+    <div class="row" style="margin-top: 12px;">
+      <button id="btnConfirm">投資を確定</button>
+    </div>
   </div>
 
   <div class="card">
@@ -135,12 +131,6 @@
   </div>
 
 </main>
-
-<div class="footerbar">
-  <div class="wrap">
-    <button id="btnConfirm">投資を確定</button>
-  </div>
-</div>
 
 <script>
 (() => {
@@ -274,7 +264,7 @@
     const raw = toHalfWidth(String(text || "")).trim();
     if (!raw) return { value: 0, empty: true, valid: true };
 
-    const cleaned = raw.replace(/\s+/g, "").replace(/円/g, "");
+    const cleaned = raw.replace(/\s+/g, "").replace(/[円,]/g, "");
     const matched = cleaned.match(/^([0-9]+(?:\.[0-9]+)?)(億|万|千)?$/);
     if (!matched) return { valid: false };
 
