@@ -266,15 +266,13 @@
 
     // 入力しやすさ優先: 通貨記号・カンマ・空白は無視する
     const cleaned = raw.replace(/\s+/g, "").replace(/[円,¥￥]/g, "");
-    const matched = cleaned.match(/^([0-9]+(?:\.[0-9]+)?)(億|万|千)?$/);
+    const matched = cleaned.match(/^([0-9]+(?:\.[0-9]+)?)$/);
     if (!matched) return { valid: false };
 
     const base = Number(matched[1]);
     if (!Number.isFinite(base) || base < 0) return { valid: false };
 
-    const unit = matched[2] || "";
-    const multiplier = unit === "億" ? 100_000_000 : unit === "万" ? 10_000 : unit === "千" ? 1_000 : 1;
-    return { value: Math.round(base * multiplier), empty: false, valid: true };
+    return { value: Math.round(base), empty: false, valid: true };
   }
 
   function formatAmountInput(el) {
@@ -299,8 +297,8 @@
         <div class="small">資本金: ${yen(c.capital)} / 最低投資金額: ${yen(c.min)} / リスク: ${c.risk}</div>
         <div class="small">${c.description}</div>
         <input type="text" inputmode="numeric"
-               id="inv_${c.id}" placeholder="例: 100万 / 300,000 / 50千" />
-        <div class="hint">0 でもOK（投資しない）。「万・千・億」「,」「円」を使って入力できます。</div>
+               id="inv_${c.id}" placeholder="例: 300000 / 300,000 / 300000円" />
+        <div class="hint">0 でもOK（投資しない）。数字のみ入力してください（カンマ・円記号は可）。</div>
       `;
       elCompanyInputs.appendChild(wrap);
 
@@ -344,7 +342,7 @@
 
     const invalid = inputs.filter(x => !x.parsed.valid);
     if (invalid.length) {
-      alert("入力形式が正しくない企業があります。\n例: 100万 / 300,000 / 50千");
+      alert("入力形式が正しくない企業があります。\n例: 300000 / 300,000 / 300000円");
       invalid[0].el.focus();
       return;
     }
