@@ -55,7 +55,7 @@
         <div class="v" id="kpiInitial">¥1,000,000</div>
       </div>
       <div class="box">
-        <div class="t">現在の総資産（投資合計）</div>
+        <div class="t">現在の総資産（投資＋未投資）</div>
         <div class="v" id="kpiTotal">¥0</div>
       </div>
       <div class="box">
@@ -233,6 +233,7 @@
   const state = {
     initial: INITIAL_CASH,
     investments: Object.fromEntries(companies.map(c => [c.id, 0])),
+    uninvested: INITIAL_CASH,
   };
 
   // ====== DOM ======
@@ -297,8 +298,8 @@
   }
 
   function renderRemainingPreview() {
-    const baseTotal = confirmed ? sumInvestments() : getInputTotal();
-    elKpiRemaining.textContent = yen(state.initial - baseTotal);
+    const remaining = confirmed ? state.uninvested : (state.initial - getInputTotal());
+    elKpiRemaining.textContent = yen(remaining);
   }
 
   const sumInvestments = () => companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
@@ -347,9 +348,10 @@
     });
 
     const total = sumInvestments();
+    const totalAssets = total + state.uninvested;
     elTableTotal.textContent = yen(total);
     elKpiInitial.textContent = yen(state.initial);
-    elKpiTotal.textContent = yen(total);
+    elKpiTotal.textContent = yen(totalAssets);
     elKpiRound.textContent = String(round);
     renderRemainingPreview();
 
@@ -393,7 +395,8 @@
       x.el.value = numberWithCommas(fixed);
     });
     confirmed = true;
-    setLog(`✅ 投資確定: 合計 ${yen(sumInvestments())}（未投資残: ${yen(state.initial - sumInvestments())}）`);
+    state.uninvested = state.initial - total;
+    setLog(`✅ 投資確定: 合計 ${yen(sumInvestments())}（未投資残: ${yen(state.uninvested)}）`);
     renderTable();
   }
 
@@ -420,7 +423,7 @@
 
     round += 1;
 
-    const total = sumInvestments();
+    const total = sumInvestments() + state.uninvested;
     const line = `🎲 イベント適用 #${round}: イベント${e.no}を適用\n   → 総資産: ${yen(total)}`;
     setLog(line);
 
@@ -443,6 +446,7 @@
     round = 0;
     confirmed = false;
     companies.forEach(c => state.investments[c.id] = 0);
+    state.uninvested = state.initial;
     companies.forEach(c => {
       const el = document.getElementById(`inv_${c.id}`);
       if (el) el.value = "";
