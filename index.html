@@ -264,7 +264,8 @@
     const raw = toHalfWidth(String(text || "")).trim();
     if (!raw) return { value: 0, empty: true, valid: true };
 
-    const cleaned = raw.replace(/\s+/g, "").replace(/[円,]/g, "");
+    // 入力しやすさ優先: 通貨記号・カンマ・空白は無視する
+    const cleaned = raw.replace(/\s+/g, "").replace(/[円,¥￥]/g, "");
     const matched = cleaned.match(/^([0-9]+(?:\.[0-9]+)?)(億|万|千)?$/);
     if (!matched) return { valid: false };
 
