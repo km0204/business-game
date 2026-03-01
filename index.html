@@ -309,6 +309,7 @@
 
   // ====== 状態 ======
   let confirmed = false;
+  let appliedInCurrentRound = false;
   let round = 0;
   const state = {
     initial: INITIAL_CASH,
@@ -377,12 +378,20 @@
     }, 0);
   }
 
-  function renderRemainingPreview() {
-    const remaining = confirmed ? state.uninvested : (state.initial - getInputTotal());
-    elKpiRemaining.textContent = yen(remaining);
+  function sumInvestments() {
+    return companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
   }
 
-  const sumInvestments = () => companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
+  function getCurrentBudget() {
+    return sumInvestments() + state.uninvested;
+  }
+
+  function renderRemainingPreview() {
+    const totalAssets = getCurrentBudget();
+    const remaining = totalAssets - getInputTotal();
+    // 未投資残高（入力中）= 現在の総資産（投資＋未投資）- 入力額合計
+    elKpiRemaining.textContent = yen(remaining);
+  }
 
   function setLog(text, append=true) {
     if (append) elLog.textContent = (elLog.textContent ? (elLog.textContent + "\n") : "") + text;
@@ -435,7 +444,7 @@
     elKpiRound.textContent = String(round);
     renderRemainingPreview();
 
-    btnApply.disabled = !confirmed;
+    btnApply.disabled = !confirmed || appliedInCurrentRound;
     btnConfirm.textContent = confirmed ? "投資を確定（確定済み）" : "投資を確定";
     btnConfirm.disabled = confirmed;
   }
@@ -461,10 +470,11 @@
       return;
     }
 
-    // 初期資金を超えない（今回は現金概念なしで「投資合計＝資産」でもOKだが、要件に沿ってチェック）
+    // 現在の利用可能資金を超えない
+    const budget = getCurrentBudget();
     const total = inputs.reduce((a, x) => a + x.val, 0);
-    if (total > state.initial) {
-      alert(`投資合計が初期資金を超えています。\n投資合計: ${yen(total)} / 初期資金: ${yen(state.initial)}`);
+    if (total > budget) {
+      alert(`投資合計が利用可能資金を超えています。\n投資合計: ${yen(total)} / 利用可能資金: ${yen(budget)}`);
       return;
     }
 
@@ -475,7 +485,8 @@
       x.el.value = numberWithCommas(fixed);
     });
     confirmed = true;
-    state.uninvested = state.initial - total;
+    appliedInCurrentRound = false;
+    state.uninvested = budget - total;
     setLog(`✅ 投資確定: 合計 ${yen(sumInvestments())}（未投資残: ${yen(state.uninvested)}）`);
     renderTable();
   }
@@ -486,6 +497,10 @@
 
   function applyEvent(no) {
     if (!confirmed) return;
+    if (appliedInCurrentRound) {
+      alert("このラウンドでは既にイベントを適用済みです。新しいラウンドで再度投資を確定してください。");
+      return;
+    }
 
     const e = getEvent(no);
     if (!e) {
@@ -507,17 +522,19 @@
     const line = `🎲 イベント適用 #${round}: イベント${e.no}を適用\n   → 総資産: ${yen(total)}`;
     setLog(line);
 
+    appliedInCurrentRound = true;
     renderTable();
   }
 
   function newRound() {
     confirmed = false;
-    // 入力欄を現在値で埋める（次の投資配分を考えやすい）
+    appliedInCurrentRound = false;
+    // 新ラウンドは全入力欄を0で開始する
     companies.forEach(c => {
       const el = document.getElementById(`inv_${c.id}`);
-      if (el) el.value = numberWithCommas(state.investments[c.id] || 0);
+      if (el) el.value = "0";
     });
-    setLog("📝 新しいラウンド: 投資額を再入力してください（投資確定すると適用されます）。");
+    setLog("📝 新しいラウンド: 投資額を再入力してください（入力欄は0で初期化されています）。");
     renderTable();
   }
 
@@ -525,6 +542,7 @@
     if (!confirm("全リセットします。よろしいですか？")) return;
     round = 0;
     confirmed = false;
+    appliedInCurrentRound = false;
     companies.forEach(c => state.investments[c.id] = 0);
     state.uninvested = state.initial;
     companies.forEach(c => {
