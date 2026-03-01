@@ -386,9 +386,10 @@
   }
 
   function renderRemainingPreview() {
-    const remaining = confirmed ? state.uninvested : (getCurrentBudget() - getInputTotal());
-    // 入力中の見た目ではマイナスを出さず、超過時は 0 円表示にする
-    elKpiRemaining.textContent = yen(Math.max(0, remaining));
+    const totalAssets = getCurrentBudget();
+    const remaining = totalAssets - getInputTotal();
+    // 未投資残高（入力中）= 現在の総資産（投資＋未投資）- 入力額合計
+    elKpiRemaining.textContent = yen(remaining);
   }
 
   function setLog(text, append=true) {
@@ -520,12 +521,12 @@
 
   function newRound() {
     confirmed = false;
-    // 入力欄を現在値で埋める（次の投資配分を考えやすい）
+    // 新ラウンドは全入力欄を0で開始する
     companies.forEach(c => {
       const el = document.getElementById(`inv_${c.id}`);
-      if (el) el.value = numberWithCommas(state.investments[c.id] || 0);
+      if (el) el.value = "0";
     });
-    setLog("📝 新しいラウンド: 投資額を再入力してください（投資確定すると適用されます）。");
+    setLog("📝 新しいラウンド: 投資額を再入力してください（入力欄は0で初期化されています）。");
     renderTable();
   }
 
