@@ -377,16 +377,19 @@
     }, 0);
   }
 
+  function sumInvestments() {
+    return companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
+  }
+
   function getCurrentBudget() {
     return sumInvestments() + state.uninvested;
   }
 
   function renderRemainingPreview() {
     const remaining = confirmed ? state.uninvested : (getCurrentBudget() - getInputTotal());
-    elKpiRemaining.textContent = yen(remaining);
+    // 入力中の見た目ではマイナスを出さず、超過時は 0 円表示にする
+    elKpiRemaining.textContent = yen(Math.max(0, remaining));
   }
-
-  const sumInvestments = () => companies.reduce((acc, c) => acc + (state.investments[c.id] || 0), 0);
 
   function setLog(text, append=true) {
     if (append) elLog.textContent = (elLog.textContent ? (elLog.textContent + "\n") : "") + text;
