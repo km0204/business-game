@@ -377,8 +377,12 @@
     }, 0);
   }
 
+  function getCurrentBudget() {
+    return sumInvestments() + state.uninvested;
+  }
+
   function renderRemainingPreview() {
-    const remaining = confirmed ? state.uninvested : (state.initial - getInputTotal());
+    const remaining = confirmed ? state.uninvested : (getCurrentBudget() - getInputTotal());
     elKpiRemaining.textContent = yen(remaining);
   }
 
@@ -461,10 +465,11 @@
       return;
     }
 
-    // 初期資金を超えない（今回は現金概念なしで「投資合計＝資産」でもOKだが、要件に沿ってチェック）
+    // 現在の利用可能資金を超えない
+    const budget = getCurrentBudget();
     const total = inputs.reduce((a, x) => a + x.val, 0);
-    if (total > state.initial) {
-      alert(`投資合計が初期資金を超えています。\n投資合計: ${yen(total)} / 初期資金: ${yen(state.initial)}`);
+    if (total > budget) {
+      alert(`投資合計が利用可能資金を超えています。\n投資合計: ${yen(total)} / 利用可能資金: ${yen(budget)}`);
       return;
     }
 
@@ -475,7 +480,7 @@
       x.el.value = numberWithCommas(fixed);
     });
     confirmed = true;
-    state.uninvested = state.initial - total;
+    state.uninvested = budget - total;
     setLog(`✅ 投資確定: 合計 ${yen(sumInvestments())}（未投資残: ${yen(state.uninvested)}）`);
     renderTable();
   }
